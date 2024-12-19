@@ -37,6 +37,7 @@ UserSchema.methods.verifyPassword = async function (password) {
     return await bcrypt.compare(password,this.password); 
 }
 
+
 UserSchema.methods.generateAccessToken = function(){
     const payload = {
         _id: this._id,
@@ -66,6 +67,7 @@ UserSchema.methods.generateRefreshToken = function(){
         }
     )
 }
+
 
 const User = mongoose.model("User", UserSchema);
 

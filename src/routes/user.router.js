@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import { loginUser, logoutUser, registerUser } from "../controllers/user.controller.js";
+import authorizeAccess from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -7,6 +8,10 @@ const router = Router();
 // Also add middleware for respection route 
 // Compulsary Add Authorization middleware
 
-router.post('/register',registerUser);
+router.route('/register').post(registerUser);
+router.route('/login').post(loginUser);
+
+//secured routes require authorizaion based on access token
+router.route('/logout').post(authorizeAccess, logoutUser);
 
 export default router;

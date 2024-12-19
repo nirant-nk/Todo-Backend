@@ -4,6 +4,7 @@ import { connectDB } from './database/index.js';
 import subTodoRoutes from './routes/sub-todoes.router.js';
 import todoRoutes from './routes/todoes.router.js';
 import userRoutes from './routes/user.router.js';
+import ApiResponse from './utils/ApiResponse.js';
 // require('dotenv').config({path:'./env'})
 
 dotenv.config({
@@ -25,6 +26,13 @@ connectDB()
     console.log(`App connection error! ${error}`);
 })
     
+app.get('/',(req,res)=>  res.status(200).json(
+    new ApiResponse(
+        201,
+        {msg: "Welcome to ToDo HomePage!"},
+        `App Listening on port - ${port}`)
+        )
+    )
 
 app.use('/api/userRoutes',userRoutes)
 app.use('/api/todoRoutes',todoRoutes)
