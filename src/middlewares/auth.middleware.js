@@ -21,7 +21,10 @@ const authorizeAccess = asyncHandler(async (req,res,next) => {
         req.user = user
         next()
     } catch (error) {
-        res.status(400).json(
+        
+        res
+        .status(400)
+        .json(
             new ApiError(400,`State - Authorization\nServer side error: ${error}`)
         );
     }

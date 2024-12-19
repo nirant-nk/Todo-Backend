@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import { OPTIONS } from '../constants.js';
 import { User } from '../models/user.model.js';
 import ApiError from '../utils/ApiError.js';
@@ -44,8 +45,22 @@ const registerUser = asyncHandler(async (req,res) =>{
 const loginUser = asyncHandler( async (req,res) => {
     try {
         // Input - take email/username and password from req.body
+        
+        // let isLoggedOut 
+        // if((await req.cookies?.isLoggedIn) === true){
+        //     isLoggedOut = false
+        // }
+        // else{
+        //     isLoggedOut = true
+        // }
+
+        // console.log(isLoggedOut)
+        // if(!isLoggedOut) throw new ApiError(400,"User is alread logged in. Logout first!")
+
+
+
         const {email,username,password} = req.body;
-    
+
         // Validation - check if any of them is empty !- throw ApiError
         if( !( (email && username) || password) ){
             throw new ApiError(400,`Either email or username is required! Password is always required!`)
@@ -86,6 +101,7 @@ const loginUser = asyncHandler( async (req,res) => {
         .status(200)
         .cookie("accessToken",accessToken,OPTIONS)
         .cookie("refreshToken",refreshToken,OPTIONS)
+        // .cookie("isLoggedIn",true,OPTIONS)
         .json(
             new ApiResponse(
                 201,
@@ -123,6 +139,7 @@ const logoutUser = asyncHandler(async (req,res) => {
         .status(200)
         .clearCookie("accessToken",OPTIONS)
         .clearCookie("refreshToken",OPTIONS)
+        // .cookie("isLoggedIn",false,OPTIONS)
         .json(
             new ApiResponse(
                 201,
@@ -137,8 +154,46 @@ const logoutUser = asyncHandler(async (req,res) => {
     }
 })
 
+const refreshAccessToken = asyncHandler(async (req,res) => {
+    try {
+        const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken
+
+        if(!incomingRefreshToken){
+            throw new ApiError(401,"Unathorized Access!")
+        }
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+        )
+
+        const user = await User.findById(decodedToken?._id)
+
+        console.log(decodedToken === user.refreshToken) // bug here
+        if(decodedToken !== user.refreshToken)throw new ApiError(401,"Unauthorized access! Invalid Refresh Token.")
+
+        const accessToken = await user.generateAccessToken()
+
+        if(!accessToken) throw new ApiError(501,"Could not generate access token!")
+
+        res
+        .status(200)
+        .cookie("accessToken",accessToken,OPTIONS)
+        .json(
+            new ApiResponse(
+                201,
+                user,
+                "Access Token Refreshed Successfully!"
+            )
+        )
+
+
+
+    } catch (error) {
+        res.status(400).json(new ApiError(500,`State - Refresh Access Token\nClient side error: ${error}`));
+    }
+})
 
 export {
-    loginUser, logoutUser, registerUser
+    loginUser, logoutUser, refreshAccessToken, registerUser
 };
 
