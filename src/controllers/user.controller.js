@@ -1,31 +1,39 @@
-import bcrypt from 'bcrypt';
 import { User } from '../models/user.model.js';
 import ApiError from '../utils/apiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
-export const registerUser = asyncHandler(async (req,res) =>{
-    const {fullname,email,password} = req.body;
-    const userExist = await User.findOne({email})
+const registerUser = asyncHandler(async (req,res) =>{
+    const { fullname , username , email , password } = req.body ;    
 
-    if(userExist){
-        return res.status(400).send(new ApiError(401,message="Email already exist!"))
-    }
-    if(!( password && email)){
-        return res.status(400).send(new ApiError(401,message="Credentials are required!"))
+    if(
+        [fullname,username,email,password].some((field) => field?.trim() === "")
+    ) {
+        throw new ApiError(400,"All credentials are required!")
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const userExist = await User.findOne({
+        $or: [{email},{username}]
+    })
 
-    const user = new User({
+    if(userExist) throw new ApiError(409,"User already Exist!");
+
+    const user = await User.create({
         fullname,
         email,
-        password: hashedPassword, 
-    });
-    
+        username,
+        password
+    })
+
+    const createdUser = await User.findById(user._id).select(
+        "-password -refreshToken"
+    )
+
+    if(!createdUser) throw new ApiError(500,"Something went wrong while Registering user!");
 
     await user.save();
 
-    res.status(200).send(new ApiResponse(201,data=user,"User Created Successfully"))
-
+    res.status(200).json(new ApiResponse(201,createdUser,"User Created!"));
 })
+
+export { registerUser };
