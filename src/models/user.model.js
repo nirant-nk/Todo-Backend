@@ -17,6 +17,13 @@ const UserSchema = new Schema({
         required:true,
         unique: true
     },
+    avatar:{
+        type: String,
+        required: true
+    },
+    coverImage:{
+        type:String
+    },
     refreshToken:{
         type: String
     },
