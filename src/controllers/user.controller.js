@@ -283,7 +283,46 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
     }
 })
 
+const deleteUser = asyncHandler(async (req,res) => {
+    try {
+        // authorize logged in user using jwt as middleware
+        const user = await User.findByIdAndDelete(
+            req.user._id,
+        )
+        .select(
+            "-password -refreshToken"
+        )
+
+        // clear cookies
+        return res
+        .status(200)
+        .clearCookie("accessToken",OPTIONS)
+        .clearCookie("refreshToken",OPTIONS)
+        .json(
+            new ApiResponse(
+                201,
+                {
+                    deletedUser: user
+                },
+                "User Deleted Successfully!"
+            )
+        )
+
+        // 
+    } catch (error) {
+        res
+        .status(500)
+        .json(
+            new ApiError(
+                500,
+                `State - DeleteUser\nServer side error: ${error}`
+            )
+        );
+    }
+})
+
 export {
+    deleteUser,
     loginUser,
     logoutUser,
     refreshAccessToken,
