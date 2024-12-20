@@ -9,7 +9,8 @@ app.use(cors({
 }))
 app.use(express.json({limit: "20kb"})) // set limit for incoming json data
 app.use(express.urlencoded({extended:true,limit:"20kb"}))// encodes the url and sets limit for it
-app.use(express.static("public"))
+app.use(express.static("/public"))
 app.use(cookieParser())
 
 export { app };
+

@@ -4,6 +4,7 @@ import { User } from '../models/user.model.js';
 import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import uploadOnCloudinary from '../utils/Cloudinary.js';
 
 const registerUser = asyncHandler(async (req,res) =>{
     try {
@@ -11,10 +12,23 @@ const registerUser = asyncHandler(async (req,res) =>{
     
         if(
             [fullname,username,email,password].some((field) => field?.trim() === "")
-        ) {
+        ){
             throw new ApiError(400,"All credentials are required!")
         }
-    
+        
+        const avatarLocalPath = req.files?.avatar[0].path ;
+        if(!avatarLocalPath){
+            throw new ApiError(400,"Avatar image is required!")
+        }
+        const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+        const coverImageLocalPath = req.files?.coverImage[0].path ;
+        
+        let coverImage
+        if(coverImageLocalPath){
+            coverImage = await uploadOnCloudinary(coverImageLocalPath);
+        }
+
         const userExist = await User.findOne({
             $or: [{email},{username}]
         })
@@ -24,6 +38,8 @@ const registerUser = asyncHandler(async (req,res) =>{
         const user = await User.create({
             fullname,
             email,
+            avatar,
+            coverImage: coverImage || "",
             username,
             password
         })
@@ -36,9 +52,26 @@ const registerUser = asyncHandler(async (req,res) =>{
     
         await user.save();
     
-        res.status(200).json(new ApiResponse(201,createdUser,"User Created!"));
+        res
+        .status(200)
+        .json(
+            new ApiResponse(
+                201,
+                createdUser,
+                "User Created!"
+            )
+        );
+
     } catch (error) {
-        res.status(500).json(new ApiError(500,`State - Regisration\nServer side error: ${error}`));
+
+        res
+        .status(500)
+        .json(
+            new ApiError(
+                500,
+                `State - Regisration\nServer side error: ${error}`
+            )
+        );
     }
 })
 
@@ -168,8 +201,10 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
 
         const user = await User.findById(decodedToken?._id)
 
-        console.log(decodedToken === user.refreshToken) // bug here
-        if(decodedToken !== user.refreshToken)throw new ApiError(401,"Unauthorized access! Invalid Refresh Token.")
+        console.log(decodedToken , user.refreshToken) // bug here
+        if(decodedToken != user.refreshToken){
+            throw new ApiError(401,"Unauthorized access! Invalid Refresh Token.")
+        } 
 
         const accessToken = await user.generateAccessToken()
 

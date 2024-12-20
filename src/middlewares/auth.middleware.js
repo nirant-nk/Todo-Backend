@@ -16,6 +16,9 @@ const authorizeAccess = asyncHandler(async (req,res,next) => {
             "-password -refreshToken"
         )
 
+        // console.log(user.email, decodedToken.email) //check while fixing bug
+        if(user._id != decodedToken._id) throw new ApiError(401,"Authorization Revoked!")
+
         if(!user) throw new ApiError(400,"Invalid Token! No such user!")
 
         req.user = user
