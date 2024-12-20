@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { app } from './app.js';
+import app from './app.js';
 import { connectDB } from './database/index.js';
 import subTodoRoutes from './routes/sub-todoes.router.js';
 import todoRoutes from './routes/todoes.router.js';

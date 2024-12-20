@@ -9,7 +9,10 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
-        if(!localFilePath) throw new ApiError(400,"No file available for upload!")
+        if(!localFilePath) throw new ApiError(
+            400,
+            "No file available for upload!"
+        )
 
         const result = await cloudinary.uploader.upload(
             localFilePath,
@@ -18,7 +21,10 @@ const uploadOnCloudinary = async (localFilePath) => {
             }
         )
 
-        if(!result) throw new ApiError(500,"Error While Uploading the file")
+        if(!result) throw new ApiError(
+            500,
+            "Error While Uploading the file"
+        )
 
         fs.unlinkSync(localFilePath)
 
@@ -30,7 +36,10 @@ const uploadOnCloudinary = async (localFilePath) => {
            
         }
         
-        throw new ApiError(400,`State - Cloudinary Upload! ERROR - ${error}`)
+        throw new ApiError(
+            400,
+            `State - Cloudinary Upload! ERROR - ${error}`
+        )
     }
 }
 

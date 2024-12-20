@@ -11,14 +11,23 @@ const registerUser = asyncHandler(async (req,res) =>{
         const { fullname , username , email , password } = req.body ;    
     
         if(
-            [fullname,username,email,password].some((field) => field?.trim() === "")
+            [fullname,username,email,password]
+            .some(
+                (field) => field?.trim() === ""
+            )
         ){
-            throw new ApiError(400,"All credentials are required!")
+            throw new ApiError(
+                400,
+                "All credentials are required!"
+            )
         }
         
         const avatarLocalPath = req.files?.avatar[0].path ;
         if(!avatarLocalPath){
-            throw new ApiError(400,"Avatar image is required!")
+            throw new ApiError(
+                400,
+                "Avatar image is required!"
+            )
         }
         const avatar = await uploadOnCloudinary(avatarLocalPath);
 
@@ -33,7 +42,10 @@ const registerUser = asyncHandler(async (req,res) =>{
             $or: [{email},{username}]
         })
     
-        if(userExist) throw new ApiError(409,"User already Exist!");
+        if(userExist) throw new ApiError(
+            409,
+            "User already Exist!"
+        );
     
         const user = await User.create({
             fullname,
@@ -48,7 +60,10 @@ const registerUser = asyncHandler(async (req,res) =>{
             "-password -refreshToken"
         )
     
-        if(!createdUser) throw new ApiError(500,"Something went wrong while Registering user!");
+        if(!createdUser) throw new ApiError(
+            500,
+            "Something went wrong while Registering user!"
+        );
     
         await user.save();
     
@@ -96,23 +111,35 @@ const loginUser = asyncHandler( async (req,res) => {
 
         // Validation - check if any of them is empty !- throw ApiError
         if( !( (email && username) || password) ){
-            throw new ApiError(400,`Either email or username is required! Password is always required!`)
+            throw new ApiError(
+                400,
+                `Either email or username is required! Password is always required!`
+            )
         }
     
         // Search in Database - email / username !- throw ApiError
         const user = await User.findOne({
-            $or: [{email},{username}]
+            $or: [
+                {email},
+                {username}
+            ]
         })
 
         if(!user){
-            throw new ApiError(404,"User not found!");
+            throw new ApiError(
+                404,
+                "User not found!"
+            );
         }
 
         // Verify password using created method in UserSchema !- throw ApiError
         const isPasswordCorrect = await user.verifyPassword(password)
 
         if(!isPasswordCorrect){
-            throw new ApiError(404,"Incorrect Password!")
+            throw new ApiError(
+                404,
+                "Incorrect Password!"
+            )
         }
 
         // Generate JWT Tokens
@@ -121,10 +148,13 @@ const loginUser = asyncHandler( async (req,res) => {
         const accessToken = await user.generateAccessToken();
 
         user.refreshToken = refreshToken;
-        await user.save({validateBeforeSave: false}) 
+        await user.save({
+            validateBeforeSave: false
+        }) 
 
         // Remove password and refreshToken from user and send response
-        const loggedInUser = await User.findById(user._id).select(
+        const loggedInUser = await User.findById(user._id)
+        .select(
             "-password -refreshToken"
         )
 
@@ -149,7 +179,9 @@ const loginUser = asyncHandler( async (req,res) => {
 
        
     } catch (error) {
-        res.status(500).json(new ApiError(500,`State - Login\nServer side error: ${error}`));
+        res
+        .status(500)
+        .json(new ApiError(500,`State - Login\nServer side error: ${error}`));
     }
 } )
 
@@ -183,7 +215,14 @@ const logoutUser = asyncHandler(async (req,res) => {
 
         // 
     } catch (error) {
-        res.status(500).json(new ApiError(500,`State - Logout\nServer side error: ${error}`));
+        res
+        .status(500)
+        .json(
+            new ApiError(
+                500,
+                `State - Logout\nServer side error: ${error}`
+            )
+        );
     }
 })
 
@@ -192,7 +231,10 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
         const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken
 
         if(!incomingRefreshToken){
-            throw new ApiError(401,"Unathorized Access!")
+            throw new ApiError(
+                401,
+                "Unathorized Access!"
+            )
         }
         const decodedToken = jwt.verify(
             incomingRefreshToken,
@@ -203,12 +245,18 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
 
         console.log(decodedToken , user.refreshToken) // bug here
         if(decodedToken != user.refreshToken){
-            throw new ApiError(401,"Unauthorized access! Invalid Refresh Token.")
+            throw new ApiError(
+                401,
+                "Unauthorized access! Invalid Refresh Token."
+            )
         } 
 
         const accessToken = await user.generateAccessToken()
 
-        if(!accessToken) throw new ApiError(501,"Could not generate access token!")
+        if(!accessToken) throw new ApiError(
+            501,
+            "Could not generate access token!"
+        )
 
         res
         .status(200)
@@ -224,11 +272,21 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
 
 
     } catch (error) {
-        res.status(400).json(new ApiError(500,`State - Refresh Access Token\nClient side error: ${error}`));
+        res
+        .status(400)
+        .json(
+            new ApiError(
+                500,
+                `State - Refresh Access Token\nClient side error: ${error}`
+            )
+        );
     }
 })
 
 export {
-    loginUser, logoutUser, refreshAccessToken, registerUser
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    registerUser
 };
 
