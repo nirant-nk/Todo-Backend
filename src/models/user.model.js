@@ -27,6 +27,9 @@ const UserSchema = new Schema({
     refreshToken:{
         type: String
     },
+    otp:{
+        type: String
+    },
     password:{
         type:String,
         required:true
@@ -82,3 +85,4 @@ UserSchema.methods.generateRefreshToken = function(){
 const User = mongoose.model("User", UserSchema);
 
 export { User };
+

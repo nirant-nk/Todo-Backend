@@ -33,5 +33,3 @@ app.get('/',(req,res)=>  res.status(200).json(
     )
 
 app.use('/api/userRoutes',userRoutes)
-app.use('/api/todoRoutes',todoRoutes)
-app.use('/api/subTodoRoutes',subTodoRoutes)

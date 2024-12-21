@@ -5,92 +5,139 @@ import ApiError from '../utils/ApiError.js';
 import ApiResponse from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import uploadOnCloudinary from '../utils/Cloudinary.js';
+import { sendOTP, verifyOTP } from '../utils/OtpService.js';
 
-const registerUser = asyncHandler(async (req,res) =>{
+
+  // Register User and Send OTP
+const registerUser = asyncHandler(async (req, res) => {
     try {
-        const { fullname , username , email , password } = req.body ;    
-    
-        if(
-            [fullname,username,email,password]
-            .some(
-                (field) => field?.trim() === ""
-            )
-        ){
-            throw new ApiError(
-                400,
-                "All credentials are required!"
-            )
-        }
+        const { fullname, username, email, password } = req.body;    
         
-        const avatarLocalPath = req.files?.avatar[0].path ;
-        if(!avatarLocalPath){
-            throw new ApiError(
-                400,
-                "Avatar image is required!"
-            )
-        }
-        const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-        const coverImageLocalPath = req.files?.coverImage[0].path ;
+            if(
+                [fullname, username, email, password].some(
+                    (field) => {
+                        field?.trim() === ""
+                    }
+                )
+            ){
+                throw new ApiError(
+                    400,
+                    "All credentials are required!"
+                )
+            }
         
-        let coverImage
-        if(coverImageLocalPath){
+            const userExist = await User.findOne({ $or: [{ email }, { username }] });
+            if (userExist) {
+            throw new ApiError(
+                    409, 
+                    'User already exists!'
+                );
+            }
+        
+            
+            const avatarLocalPath = req.files?.avatar[0]?.path;
+            if (!avatarLocalPath) {
+            throw new ApiError(
+                400, 
+                'Avatar image is required!'
+                );
+            }
+            const avatar = await uploadOnCloudinary(avatarLocalPath);
+        
+            
+            let coverImage = '';
+            const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+            if (coverImageLocalPath) {
             coverImage = await uploadOnCloudinary(coverImageLocalPath);
-        }
-
-        const userExist = await User.findOne({
-            $or: [{email},{username}]
-        })
-    
-        if(userExist) throw new ApiError(
-            409,
-            "User already Exist!"
-        );
-    
-        const user = await User.create({
-            fullname,
-            email,
-            avatar,
-            coverImage: coverImage || "",
-            username,
-            password
-        })
-    
-        const createdUser = await User.findById(user._id).select(
-            "-password -refreshToken"
-        )
-    
-        if(!createdUser) throw new ApiError(
-            500,
-            "Something went wrong while Registering user!"
-        );
-    
-        await user.save();
-    
-        res
-        .status(200)
-        .json(
-            new ApiResponse(
-                201,
-                createdUser,
-                "User Created!"
-            )
-        );
-
-    } catch (error) {
-
+            }
+        
+        
+            const user = await User.create({ 
+                fullname, 
+                username, 
+                email, 
+                password, 
+                avatar, 
+                coverImage: coverImage || ""
+            })
+        
+            if(!user){
+                throw new ApiError(
+                    400,
+                    "User creation failed!"
+                )
+            }
+        
+            await user.save()
+            
+            const otpMessage = await sendOTP(user);
+            res
+            .status(200)
+            .json(
+                new ApiResponse(
+                    200, 
+                    null, 
+                    otpMessage
+                ));
+    } 
+    catch (error) {
         res
         .status(500)
-        .json(
-            new ApiError(
-                500,
-                `State - Regisration\nServer side error: ${error}`
-            )
-        );
+        .json(new ApiError(400,`State - Registration\nError: ${error}`));
     }
-})
+});
+  
+  // Verify OTP and Complete Registration
+const verifyOTPAndRegister = asyncHandler(async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+      
+        const user = await User.findOne({ email });
+      
+        if (!user) {
+          throw new ApiError(404, "User not found!");
+        }
+      
+        
+        const registrationSuccess = verifyOTP(user.otp, otp);
+      
+        // console.log("here",registrationSuccess)
+        
+        if (!registrationSuccess) {
+          // OTP is incorrect, delete the user from the database
+          // Or after 1 minute the user data will be automatically deleted
+          await User.findByIdAndDelete(user._id);
+          throw new ApiError(401, 'Invalid or expired OTP!');
+        }
+        
+        // Remove sensitive data (like password) from the response
+        const createdUser = await User.findByIdAndUpdate(
+            user._id,
+            {
+                $set: {
+                    otp: undefined
+                }
+            },
+            {
+                new: true
+            }
+        )
+        .select('-password -refreshToken');
+        
+        if (!createdUser) {
+          throw new ApiError(400, 'User creation failed!');
+        }
+      
+        res.status(201).json(new ApiResponse(201, createdUser, 'User registered successfully!'));
+    } catch (error) {
+        res
+        .status(500)
+        .json(new ApiError(400,`State - OTP Verification - Client side error: ${error}`));
+    }
+});
+  
 
-const loginUser = asyncHandler( async (req,res) => {
+const loginUser = asyncHandler(async (req,res) => {
     try {
         // Input - take email/username and password from req.body
         
@@ -180,10 +227,10 @@ const loginUser = asyncHandler( async (req,res) => {
        
     } catch (error) {
         res
-        .status(500)
-        .json(new ApiError(500,`State - Login\nServer side error: ${error}`));
+        .status(400)
+        .json(new ApiError(500,`State - Login\nClient side error: ${error}`));
     }
-} )
+})
 
 const logoutUser = asyncHandler(async (req,res) => {
     try {
@@ -326,6 +373,7 @@ export {
     loginUser,
     logoutUser,
     refreshAccessToken,
-    registerUser
+    registerUser,
+    verifyOTPAndRegister
 };
 

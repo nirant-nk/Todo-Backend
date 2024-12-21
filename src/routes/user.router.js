@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { deleteUser, loginUser, logoutUser, refreshAccessToken, registerUser } from "../controllers/user.controller.js";
+import {
+  deleteUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  registerUser,
+  verifyOTPAndRegister
+} from "../controllers/user.controller.js";
 import authorizeAccess from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
 
@@ -16,6 +23,7 @@ router.route('/register').post(
       ]),
     registerUser
 );
+router.route('/verify').post(verifyOTPAndRegister)
 router.route('/login').post(loginUser);
 
 //secured routes require authorizaion based on access token
