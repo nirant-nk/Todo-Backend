@@ -1,8 +1,6 @@
 import dotenv from 'dotenv';
 import app from './app.js';
 import { connectDB } from './database/index.js';
-import subTodoRoutes from './routes/sub-todoes.router.js';
-import todoRoutes from './routes/todoes.router.js';
 import userRoutes from './routes/user.router.js';
 import ApiResponse from './utils/ApiResponse.js';
 // require('dotenv').config({path:'./env'})
