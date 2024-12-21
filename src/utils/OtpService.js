@@ -27,32 +27,24 @@ export const sendOTP = async (user) => {
   };
 
   user.otp = otp
+  user.otpExpiry = new Date(Date.now() + 60 * 1000); 
 
-  await user.save()
-  // Send OTP via email
+
+  await user.save();
+
   await transporter.sendMail(mailOptions);
-
-  // Store OTP in memory with an expiration time of 5 minutes (300 seconds)
-
+  
   return 'OTP sent successfully! Please check your email.';
 };
 
 // Verify the OTP entered by the user
 export const verifyOTP = (userOtp, enteredOtp) => {
-  // Verify if the OTP has expired (if it's over 5 minutes, for example)
-  const otpGeneratedTime = userOtp.createdAt; // assuming you save the creation time of OTP when it's generated
-  const expirationTime = 1 * 60 * 1000; // 1 minute in milliseconds
-  
-  const currentTime = new Date().getTime();
-  if (currentTime - otpGeneratedTime > expirationTime) {
-      return false;  // OTP expired
-  }
 
-  // Verify the entered OTP
   if (userOtp === enteredOtp) {
     console.log(`OTP : ${userOtp} | Entered OTP : ${enteredOtp}`);
     return true;  
   }
 
   return false;  
+  
 };

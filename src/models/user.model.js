@@ -30,6 +30,12 @@ const UserSchema = new Schema({
     otp:{
         type: String
     },
+    otpExpiry:{
+        type: Date,
+        index: {
+            expireAfterSeconds: 60
+        }
+    },
     password:{
         type:String,
         required:true

@@ -71,6 +71,8 @@ const registerUser = asyncHandler(async (req, res) => {
             await user.save()
             
             const otpMessage = await sendOTP(user);
+
+
             res
             .status(200)
             .json(
@@ -99,11 +101,11 @@ const verifyOTPAndRegister = asyncHandler(async (req, res) => {
         }
       
         
-        const registrationSuccess = verifyOTP(user.otp, otp);
+        const isOTPverified = verifyOTP(user.otp, otp);
       
         // console.log("here",registrationSuccess)
         
-        if (!registrationSuccess) {
+        if (!isOTPverified) {
           // OTP is incorrect, delete the user from the database
           // Or after 1 minute the user data will be automatically deleted
           await User.findByIdAndDelete(user._id);
@@ -114,8 +116,9 @@ const verifyOTPAndRegister = asyncHandler(async (req, res) => {
         const createdUser = await User.findByIdAndUpdate(
             user._id,
             {
-                $set: {
-                    otp: undefined
+                $unset: {
+                    otp: 1,
+                    otpExpiry: 1
                 }
             },
             {
