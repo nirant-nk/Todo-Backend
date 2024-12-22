@@ -7,7 +7,9 @@ const sendOTP = async (user) => {
   const otp = speakeasy.totp({
     secret: process.env.OTP_SECRET, // Secret key for OTP generation
     encoding: 'base32',
+    step: 60
   });
+
 
   // Create a transporter for nodemailer
   const transporter = nodemailer.createTransport({
@@ -18,19 +20,25 @@ const sendOTP = async (user) => {
     },
   });
 
+
   // Define the email content
   const mailOptions = {
     from: process.env.EMAIL,
     to: user.email,
     subject: 'Your OTP Code',
-    text: `Your OTP code is ${otp}. It will expire in 5 minutes.`,
+    text: `Your OTP code is ${otp}. It will expire within a minute.`,
   };
 
-  user.otp = otp
-  user.otpExpiry = new Date(Date.now() + 60 * 1000); 
+  
+  if(!user.isVerified){
+    user.otpExpiry = new Date(Date.now() + 60 * 1000); 
+  }
 
+  user.otp = otp
 
   await user.save();
+
+  // console.log(` user at otpService : ${user}`);
 
   await transporter.sendMail(mailOptions);
   
@@ -53,3 +61,4 @@ export {
   sendOTP,
   verifyOTP
 };
+

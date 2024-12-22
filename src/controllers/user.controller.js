@@ -72,7 +72,6 @@ const registerUser = asyncHandler(async (req, res) => {
             
             const otpMessage = await sendOTP(user);
 
-
             res
             .status(200)
             .json(
@@ -105,7 +104,7 @@ const verifyOTPAndRegister = asyncHandler(async (req, res) => {
       
         // console.log("here",registrationSuccess)
         
-        if (!isOTPverified) {
+        if ( !(user.isVerified || isOTPverified) ) {
           // OTP is incorrect, delete the user from the database
           // Or after 1 minute the user data will be automatically deleted
           await User.findByIdAndDelete(user._id);
@@ -119,6 +118,9 @@ const verifyOTPAndRegister = asyncHandler(async (req, res) => {
                 $unset: {
                     otp: 1,
                     otpExpiry: 1
+                },
+                $set:{
+                    isVerified: true
                 }
             },
             {
@@ -141,21 +143,8 @@ const verifyOTPAndRegister = asyncHandler(async (req, res) => {
   
 
 const loginUser = asyncHandler(async (req,res) => {
+
     try {
-        // Input - take email/username and password from req.body
-        
-        // let isLoggedOut 
-        // if((await req.cookies?.isLoggedIn) === true){
-        //     isLoggedOut = false
-        // }
-        // else{
-        //     isLoggedOut = true
-        // }
-
-        // console.log(isLoggedOut)
-        // if(!isLoggedOut) throw new ApiError(400,"User is alread logged in. Logout first!")
-
-
 
         const {email,username,password} = req.body;
 
@@ -193,7 +182,49 @@ const loginUser = asyncHandler(async (req,res) => {
         }
 
         // Generate JWT Tokens
+        const otpMessage = await sendOTP(user);
 
+        res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200, 
+                null, 
+                otpMessage
+        ));
+
+       
+    } catch (error) {
+        res
+        .status(400)
+        .json(new ApiError(400,`State - Login\nClient side error: ${error}`));
+    }
+})
+
+const verifyOTPAndLogin = asyncHandler(async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+      
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            throw new ApiError(404, "User not found!");
+        }
+
+        // console.log(` user at verification : ${user}`);
+
+        // console.log(`Entered otp: ${otp}`)
+      
+        const isOTPverified = verifyOTP(user.otp, otp);
+      
+        // console.log("here",registrationSuccess)
+        
+        if (!isOTPverified) {
+          // OTP is incorrect, delete the user from the database
+          // Or after 1 minute the user data will be automatically deleted
+          throw new ApiError(401, 'Login Failed. Invalid or expired OTP!');
+        }
+        
         const refreshToken = await user.generateRefreshToken();
         const accessToken = await user.generateAccessToken();
 
@@ -203,7 +234,17 @@ const loginUser = asyncHandler(async (req,res) => {
         }) 
 
         // Remove password and refreshToken from user and send response
-        const loggedInUser = await User.findById(user._id)
+        const loggedInUser = await User.findByIdAndUpdate(
+            user._id,
+            {
+                $unset: {
+                    otp:1
+                }
+            },
+            {
+                new : true
+            }
+         )
         .select(
             "-password -refreshToken"
         )
@@ -226,14 +267,12 @@ const loginUser = asyncHandler(async (req,res) => {
                 "User Logged in successfully!"
             )
         )
-
-       
     } catch (error) {
         res
         .status(400)
-        .json(new ApiError(500,`State - Login\nClient side error: ${error}`));
+        .json(new ApiError(400,`State - Login OTP Verification - Client side error: ${error}`));
     }
-})
+});
 
 const logoutUser = asyncHandler(async (req,res) => {
     try {
@@ -377,6 +416,7 @@ export {
     logoutUser,
     refreshAccessToken,
     registerUser,
+    verifyOTPAndLogin,
     verifyOTPAndRegister
 };
 

@@ -5,6 +5,7 @@ import {
   logoutUser,
   refreshAccessToken,
   registerUser,
+  verifyOTPAndLogin,
   verifyOTPAndRegister
 } from "../controllers/user.controller.js";
 import authorizeAccess from "../middlewares/auth.middleware.js";
@@ -16,6 +17,7 @@ const router = Router();
 // Also add middleware for respection route 
 // Compulsary Add Authorization middleware
 
+// Registration Routes- not secure
 router.route('/register').post(
     upload.fields([
         { name: 'avatar', maxCount: 1 },  
@@ -23,8 +25,12 @@ router.route('/register').post(
       ]),
     registerUser
 );
-router.route('/verify').post(verifyOTPAndRegister)
+router.route('/verifyAndRegister').post(verifyOTPAndRegister)
+
+// Login Routes - not secure
 router.route('/login').post(loginUser);
+router.route('/verifyAndLogin').post(verifyOTPAndLogin)
+
 
 //secured routes require authorizaion based on access token
 router.route('/logout').get(authorizeAccess, logoutUser);
