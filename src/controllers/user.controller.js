@@ -293,7 +293,7 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
 
         const user = await User.findById(decodedToken?._id)
 
-        console.log(decodedToken , user.refreshToken) // bug here
+        // console.log(decodedToken , user.refreshToken) // bug here
         if(decodedToken != user.refreshToken){
             throw new ApiError(
                 401,

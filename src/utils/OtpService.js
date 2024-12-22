@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import speakeasy from 'speakeasy';
 
 // Send OTP to the user's email
-export const sendOTP = async (user) => {
+const sendOTP = async (user) => {
   // Generate OTP using speakeasy
   const otp = speakeasy.totp({
     secret: process.env.OTP_SECRET, // Secret key for OTP generation
@@ -38,13 +38,18 @@ export const sendOTP = async (user) => {
 };
 
 // Verify the OTP entered by the user
-export const verifyOTP = (userOtp, enteredOtp) => {
+const verifyOTP = (userOtp, enteredOtp) => {
 
   if (userOtp === enteredOtp) {
-    console.log(`OTP : ${userOtp} | Entered OTP : ${enteredOtp}`);
+    // console.log(`OTP : ${userOtp} | Entered OTP : ${enteredOtp}`);
     return true;  
   }
 
   return false;  
   
+};
+
+export {
+  sendOTP,
+  verifyOTP
 };
