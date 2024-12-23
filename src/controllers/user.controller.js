@@ -28,12 +28,17 @@ const registerUser = asyncHandler(async (req, res) => {
         
             const userExist = await User.findOne({ $or: [{ email }, { username }] });
             if (userExist) {
-            throw new ApiError(
+                throw new ApiError(
                     409, 
                     'User already exists!'
                 );
             }
-        
+            if(userExist.isVerified){
+                throw new ApiError(
+                    400,
+                    "User is Already Registered"
+                 );
+            }
             
             const avatarLocalPath = req.files?.avatar[0]?.path;
             if (!avatarLocalPath) {
@@ -98,7 +103,10 @@ const verifyOTPAndRegister = asyncHandler(async (req, res) => {
         if (!user) {
           throw new ApiError(404, "User not found!");
         }
+       
+        const isOTPverified = verifyOTP(user.otp, otp);
       
+        // console.log("here",registrationSuccess)
         if(user.isVerified){
 
             await user.updateOne(
@@ -117,16 +125,9 @@ const verifyOTPAndRegister = asyncHandler(async (req, res) => {
                 "User is Already Registered"
              )
         
-        }
-             
-        const isOTPverified = verifyOTP(user.otp, otp);
-      
-        // console.log("here",registrationSuccess)
-        
-        if ( !(user.isVerified || isOTPverified) ) {
+        }else if ( !isOTPverified ) {
           // OTP is incorrect, delete the user from the database
           // Or after 1 minute the user data will be automatically deleted
-          await User.findByIdAndDelete(user._id);
           throw new ApiError(401, 'Invalid or expired OTP!');
         }
         
