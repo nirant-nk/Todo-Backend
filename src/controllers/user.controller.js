@@ -28,17 +28,18 @@ const registerUser = asyncHandler(async (req, res) => {
         
             const userExist = await User.findOne({ $or: [{ email }, { username }] });
             if (userExist) {
+                if(userExist.isVerified){
+                    throw new ApiError(
+                        400,
+                        "User is Already Registered"
+                     );
+                }
                 throw new ApiError(
                     409, 
                     'User already exists!'
                 );
             }
-            if(userExist.isVerified){
-                throw new ApiError(
-                    400,
-                    "User is Already Registered"
-                 );
-            }
+            
             
             const avatarLocalPath = req.files?.avatar[0]?.path;
             if (!avatarLocalPath) {
@@ -463,8 +464,8 @@ const updateDetails = asyncHandler(async (req, res) => {
 
         // Handle password update if provided
         if (password) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            user.password = hashedPassword;
+        
+            user.password = password;
         }
 
         // Handle avatar update if provided
