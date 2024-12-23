@@ -437,6 +437,65 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
     }
 })
 
+const updateDetails = asyncHandler(async (req, res) => {
+    try {
+        const { fullname, username, email, password } = req.body;
+        const user = req.user; // From the JWT authorization middleware
+
+        if (!fullname && !username && !email && !password && !req.files?.avatar && !req.files?.coverImage) {
+            throw new ApiError(400, 'At least one field is required for update');
+        }
+
+        // Validate if email or username is being updated, and check if they already exist
+        if (email && email !== user.email) {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                throw new ApiError(409, 'Email is already taken!');
+            }
+        }
+
+        if (username && username !== user.username) {
+            const existingUsername = await User.findOne({ username });
+            if (existingUsername) {
+                throw new ApiError(409, 'Username is already taken!');
+            }
+        }
+
+        // Handle password update if provided
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
+        }
+
+        // Handle avatar update if provided
+        let avatar = user.avatar;
+        if (req.files?.avatar) {
+            const avatarLocalPath = req.files.avatar[0].path;
+            avatar = await uploadOnCloudinary(avatarLocalPath);
+        }
+
+        // Handle cover image update if provided
+        let coverImage = user.coverImage;
+        if (req.files?.coverImage) {
+            const coverImageLocalPath = req.files.coverImage[0].path;
+            coverImage = await uploadOnCloudinary(coverImageLocalPath);
+        }
+
+        // Update the user details in the database
+        const updatedUser = await User.findByIdAndUpdate(
+            user._id,
+            {
+                $set: { fullname, username, email, avatar, coverImage },
+            },
+            { new: true }
+        ).select('-password -refreshToken');
+
+        res.status(200).json(new ApiResponse(200, updatedUser, 'User details updated successfully'));
+    } catch (error) {
+        res.status(500).json(new ApiError(500, `Update details error: ${error.message}`));
+    }
+});
+
 const deleteUser = asyncHandler(async (req,res) => {
     try {
         // authorize logged in user using jwt as middleware
@@ -479,6 +538,7 @@ export {
     refreshAccessToken,
     registerUser,
     resendOTP,
+    updateDetails,
     verifyOTPAndLogin,
     verifyOTPAndRegister
 };
