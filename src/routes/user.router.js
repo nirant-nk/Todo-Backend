@@ -6,6 +6,7 @@ import {
   refreshAccessToken,
   registerUser,
   resendOTP,
+  updateDetails,
   verifyOTPAndLogin,
   verifyOTPAndRegister
 } from "../controllers/user.controller.js";
@@ -37,6 +38,14 @@ router.route('/resendOTP').post(resendOTP)
 
 //secured routes require authorizaion based on access token
 router.route('/logout').get(authorizeAccess, logoutUser);
+router.route('/updateDetails').patch(
+    authorizeAccess, // Ensure user is authenticated
+    upload.fields([
+        { name: 'avatar', maxCount: 1 },
+        { name: 'coverImage', maxCount: 1 }
+    ]),
+    updateDetails 
+);
 router.route('/deleteUser').get(authorizeAccess, deleteUser);
 router.route('/refreshAccess').get( refreshAccessToken);
 
