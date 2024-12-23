@@ -33,7 +33,7 @@ const UserSchema = new Schema({
     otpExpiry:{
         type: Date,
         index: {
-            expireAfterSeconds: 60
+            expireAfterSeconds: 180
         }
     },
     isVerified:{

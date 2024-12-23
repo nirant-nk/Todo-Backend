@@ -99,7 +99,26 @@ const verifyOTPAndRegister = asyncHandler(async (req, res) => {
           throw new ApiError(404, "User not found!");
         }
       
+        if(user.isVerified){
+
+            await user.updateOne(
+                {
+                    $unset: {
+                        otp: 1,
+                    }
+                },
+                {
+                    new: true
+                }
+            )
+
+            throw new ApiError(
+                400,
+                "User is Already Registered"
+             )
         
+        }
+             
         const isOTPverified = verifyOTP(user.otp, otp);
       
         // console.log("here",registrationSuccess)
@@ -171,6 +190,13 @@ const loginUser = asyncHandler(async (req,res) => {
             );
         }
 
+        if(!user.isVerified){
+            throw new ApiError(
+                400,
+                "Please register and verify your account before login."
+            )
+        }
+
         // Verify password using created method in UserSchema !- throw ApiError
         const isPasswordCorrect = await user.verifyPassword(password)
 
@@ -211,6 +237,13 @@ const verifyOTPAndLogin = asyncHandler(async (req, res) => {
             throw new ApiError(404, "User not found!");
         }
 
+        
+        if(!user.isVerified){
+            throw new ApiError(
+                400,
+                "Please register and verify your account before login."
+            )
+        }
         // console.log(` user at verification : ${user}`);
 
         // console.log(`Entered otp: ${otp}`)
@@ -274,14 +307,44 @@ const verifyOTPAndLogin = asyncHandler(async (req, res) => {
     }
 });
 
+const resendOTP = asyncHandler(async (req,res) => {
+    try {
+        const {email} = req.body 
+        const user = await User.findOne({
+            email
+        })
+
+        const otpMessage = await sendOTP(user)
+
+        res
+        .status(200)
+        .json(
+            new ApiResponse(
+                201,
+                null,
+                otpMessage
+            )
+        )
+
+    } catch (error) {
+        res
+        .status(500)
+        .json(
+            new ApiError(
+                500,
+                `State - resend OTP | ERROR : ${error}`
+            )
+        )
+    }
+} ) 
+
 const logoutUser = asyncHandler(async (req,res) => {
     try {
         // authorize logged in user using jwt as middleware
-        const user = await User.findByIdAndUpdate(
-            req.user._id,
+        await req.user.updateOne(
             {
-                $set: {
-                    refreshToken: undefined
+                $unset: {
+                    refreshToken: 1
                 }
             },
             {
@@ -416,6 +479,7 @@ export {
     logoutUser,
     refreshAccessToken,
     registerUser,
+    resendOTP,
     verifyOTPAndLogin,
     verifyOTPAndRegister
 };

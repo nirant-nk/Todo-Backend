@@ -39,8 +39,8 @@ const sendOTP = async (user) => {
   await user.save();
 
   // console.log(` user at otpService : ${user}`);
-
-  await transporter.sendMail(mailOptions);
+  await transporter.sendMail(mailOptions)
+  // console.log(await transporter.sendMail(mailOptions))
   
   return 'OTP sent successfully! Please check your email.';
 };

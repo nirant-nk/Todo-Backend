@@ -5,6 +5,7 @@ import {
   logoutUser,
   refreshAccessToken,
   registerUser,
+  resendOTP,
   verifyOTPAndLogin,
   verifyOTPAndRegister
 } from "../controllers/user.controller.js";
@@ -31,6 +32,8 @@ router.route('/verifyAndRegister').post(verifyOTPAndRegister)
 router.route('/login').post(loginUser);
 router.route('/verifyAndLogin').post(verifyOTPAndLogin)
 
+// ResendOTP - not secure
+router.route('/resendOTP').post(resendOTP)
 
 //secured routes require authorizaion based on access token
 router.route('/logout').get(authorizeAccess, logoutUser);
