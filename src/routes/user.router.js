@@ -32,6 +32,7 @@ router.route('/verifyAndRegister').post(verifyOTPAndRegister)
 // Login Routes - not secure
 router.route('/login').post(loginUser);
 router.route('/verifyAndLogin').post(verifyOTPAndLogin)
+router.route('/refreshAccess').get(refreshAccessToken);
 
 // ResendOTP - not secure
 router.route('/resendOTP').post(resendOTP)
@@ -47,6 +48,6 @@ router.route('/updateDetails').patch(
     updateDetails 
 );
 router.route('/deleteUser').get(authorizeAccess, deleteUser);
-router.route('/refreshAccess').get( refreshAccessToken);
+
 
 export default router;

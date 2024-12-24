@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 import app from './app.js';
 import { connectDB } from './database/index.js';
+import authorizeAccess from "./middlewares/auth.middleware.js";
+import subTodoRoutes from './routes/subtodo.router.js';
+import todoRoutes from './routes/todo.router.js';
 import userRoutes from './routes/user.router.js';
 import ApiResponse from './utils/ApiResponse.js';
 // require('dotenv').config({path:'./env'})
@@ -33,3 +36,5 @@ app.get('/',(req,res)=>  res.status(200).json(
     )
 
 app.use('/api/userRoutes',userRoutes)
+app.use('/api/user/todoRoutes',authorizeAccess,todoRoutes)
+app.use('/api/user/subTodoRoutes',authorizeAccess,subTodoRoutes)
