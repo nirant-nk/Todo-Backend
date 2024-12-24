@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import http from 'http';
 import app from './app.js';
 import { connectDB } from './database/index.js';
 import authorizeAccess from "./middlewares/auth.middleware.js";
@@ -16,10 +17,17 @@ const port = (process.env.PORT)?  process.env.PORT : 8000 ;
 
 connectDB()
 .then(()=>{
-    app.on('error',(error) => {
-        console.log(`App error: state - launching app! Description - ${error}`);
+    const server = http.createServer(app)
+
+    server.on('error',(error) => {
+        console.log(`State - launching app! Description - ${error}`);
     })
-    app.listen(port,()=>{
+
+    server.on("connection", (socket) => {
+        console.log(`New Connection Established!`)
+    })
+
+    server.listen(port,()=>{
         console.log(`App listening on port : ${port}`);
     })
 })
@@ -38,3 +46,14 @@ app.get('/',(req,res)=>  res.status(200).json(
 app.use('/api/userRoutes',userRoutes)
 app.use('/api/user/todoRoutes',authorizeAccess,todoRoutes)
 app.use('/api/user/subTodoRoutes',authorizeAccess,subTodoRoutes)
+
+// 404 handler for unmatched routes
+app.use((req, res) => {
+    res.status(404).json(new ApiResponse(404, null, 'Route not found'));
+});
+  
+  // Error handling middleware (optional, for catching all errors)
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json(new ApiResponse(500, null, 'Internal Server Error'));
+});
