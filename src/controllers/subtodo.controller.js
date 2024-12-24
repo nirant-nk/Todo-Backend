@@ -8,7 +8,8 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 // Create a SubTodo
 const createSubTodo = asyncHandler(async (req, res) => {
     try {
-        const { title, todoId } = req.body;
+        const { title } = req.body;
+        const { todoId } = req.params;
     
         if (!title?.trim() || !todoId) {
             throw new ApiError(400, 'Title and associated Todo ID are required to create a SubTodo');
@@ -95,8 +96,8 @@ const getSubTodos = asyncHandler(async (req, res) => {
 // Update a SubTodo
 const updateSubTodo = asyncHandler(async (req, res) => {
     try {
-        const { id } = req.params;
-        const { title } = req.body;
+        const { todoId, subTodoId } = req.params;
+        const { title, isCompleted } = req.body;
     
         if (!title?.trim()) {
             throw new ApiError(400, 'Title is required to update the SubTodo');
@@ -105,12 +106,13 @@ const updateSubTodo = asyncHandler(async (req, res) => {
         const userId = req.userID;
     
         // Ensure the parent Todo belongs to the user
-        const subTodo = await SubTodo.findOne({ _id: id }).populate('todoId');
+        const subTodo = await SubTodo.findOne({ _id: subTodoId, todoId: todoId }).populate('todoId');
         if (!subTodo || subTodo.todoId.userId.toString() !== userId) {
             throw new ApiError(404, 'SubTodo not found or unauthorized');
         }
     
         subTodo.title = title;
+        subTodo.isCompleted = isCompleted;
         await subTodo.save();
     
         res
@@ -137,11 +139,11 @@ const updateSubTodo = asyncHandler(async (req, res) => {
 // Delete a SubTodo
 const deleteSubTodo = asyncHandler(async (req, res) => {
 try {
-        const { id } = req.params;
+        const { todoId, subTodoId } = req.params;
         const userId = req.userID;
     
         // Ensure the parent Todo belongs to the user
-        const subTodo = await SubTodo.findOne({ _id: id }).populate('todoId');
+        const subTodo = await SubTodo.findOne({ _id: subTodoId, todoId: todoId }).populate('todoId');
         if (!subTodo || subTodo.todoId.userId.toString() !== userId) {
             throw new ApiError(404, 'SubTodo not found or unauthorized');
         }

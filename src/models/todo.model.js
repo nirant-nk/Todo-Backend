@@ -20,12 +20,17 @@ const todoSchema = new mongoose.Schema({
     timestamps: true,
 });
 
+
 todoSchema.pre("findOneAndUpdate", async function () {
     const update = this.getUpdate();
 
-    if (update.isCompleted !== undefined) {
+    // console.log(`update.isCompleted = ${update.title}`);
+    
+    if (update.isCompleted != undefined) {
         const todo = await this.model.findOne(this.getQuery());
 
+        // console.log(`update.isCompleted = ${update.isCompleted}`);
+        
         if (todo) {
             await mongoose.model("SubTodo").updateMany(
                 { todoId: todo._id },

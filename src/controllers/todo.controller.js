@@ -84,18 +84,18 @@ const getTodos = asyncHandler(async (req, res) => {
 // Update a Todo
 const updateTodo = asyncHandler(async (req, res) => {
     try {
-        const { id } = req.params;
-        const { title } = req.body;
+        const { todoId } = req.params;
+        const { title,isCompleted } = req.body;
     
-        if (!title?.trim()) {
-            throw new ApiError(400, 'Title is required to update the Todo');
-        }
+        // if (!title?.trim()) {
+        //     throw new ApiError(400, 'Either Title or completion status is required to update the Todo');
+        // }
     
         const userId = req.userID;
     
         const updatedTodo = await Todo.findOneAndUpdate(
-            { _id: id, userId },
-            { title },
+            { _id: todoId, userId},
+            { title, isCompleted },
             { new: true }
         );
     
@@ -118,17 +118,17 @@ const updateTodo = asyncHandler(async (req, res) => {
 // Delete a Todo
 const deleteTodo = asyncHandler(async (req, res) => {
     try {
-        const { id } = req.params;
+        const { todoId } = req.params;
         console.log(req.params);
         const userId = req.userID;
     
-        const deletedTodo = await Todo.findOneAndDelete({ _id: id, userId });
+        const deletedTodo = await Todo.findOneAndDelete({ _id: todoId, userId });
     
         if (!deletedTodo) {
             throw new ApiError(404, 'Todo not found or unauthorized');
         }
     
-        await SubTodo.deleteMany({ todoId: id });
+        await SubTodo.deleteMany({ todoId: todoId});
     
         res
         .status(200)
