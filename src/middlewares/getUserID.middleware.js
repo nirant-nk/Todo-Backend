@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import ApiError from '../utils/ApiError.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { asyncHandler } from '../utils/AsyncHandler.js';
 
 const getUserIdFromToken = asyncHandler(
     async (req,res,next) => {
