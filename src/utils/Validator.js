@@ -61,28 +61,35 @@ const validateSubTodo = [
 
 // Middleware to handle validation errors
 const handleValidationErrors = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        res
-        .status(400)
-        .json(
-            new ApiError(
-                400,
-                `State - Validation | ${errors}`,
-            )
-        );
+    const validationErrors = validationResult(req); 
+    
+    let errors = new String(""); 
+
+    if (!validationErrors.isEmpty()) {
+      for (let error of validationErrors.errors) {
+          errors += `| ${ error.msg } `
+      }
+      res
+      .status(400)
+      .json(
+          new ApiError(
+           400,
+           `State - Validation | ${errors}`
+          )
+      );
     }
+    
     next();
 };
 
 export {
-    handleValidationErrors,
-    validateLoginUser,
-    validateRegisterUser,
-    validateResendOTP,
-    validateSubTodo,
-    validateTodo,
-    validateUpdateDetails,
-    validateVerifyOTP
+  handleValidationErrors,
+  validateLoginUser,
+  validateRegisterUser,
+  validateResendOTP,
+  validateSubTodo,
+  validateTodo,
+  validateUpdateDetails,
+  validateVerifyOTP
 };
 
