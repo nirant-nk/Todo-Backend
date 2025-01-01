@@ -30,7 +30,7 @@ connectDB()
     server.listen(port,()=>{
         console.log(`App listening on port : ${port}`);
     })
-})
+})  
 .catch((error)=>{
     console.log(`App connection error! ${error}`);
 })
@@ -54,6 +54,5 @@ app.use((req, res) => {
   
   // Error handling middleware (optional, for catching all errors)
 app.use((err, req, res, next) => {
-    console.error(err.stack);
     res.status(500).json(new ApiResponse(500, null, 'Internal Server Error'));
 });
